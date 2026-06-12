@@ -1,0 +1,126 @@
+---- ============================================================
+---- UniHospital Database Setup
+---- SQL Server 2019 / 2022 / Azure SQL
+---- ============================================================
+--USE master ;
+--GO
+--IF DB_ID ('UniHospital') IS NOT NULL
+--DROP DATABASE UniHospital ;
+--GO
+--CREATE DATABASE UniHospital
+--COLLATE Latin1_General_CI_AS ;
+--GO
+--USE UniHospital ;
+--GO
+---- Departments
+--CREATE TABLE Department (
+--DeptID INT IDENTITY (1 ,1) PRIMARY KEY ,
+--DeptName NVARCHAR (100) NOT NULL UNIQUE ,
+--Location NVARCHAR (100) ,
+--HeadDoctorID INT NULL -- FK added after Doctor table
+--);
+
+-- Doctors
+--CREATE TABLE Doctor (
+--DoctorID INT IDENTITY (1 ,1) PRIMARY KEY ,
+--FirstName NVARCHAR (50) NOT NULL ,
+--LastName NVARCHAR (50) NOT NULL ,
+--Specialisation NVARCHAR (100) ,
+--Phone NVARCHAR (20) ,
+--HireDate DATE NOT NULL DEFAULT GETDATE () ,
+--DeptID INT NOT NULL
+--REFERENCES Department ( DeptID )
+--);
+--ALTER TABLE Department
+--ADD CONSTRAINT FK_Dept_Head
+--FOREIGN KEY ( HeadDoctorID ) REFERENCES Doctor ( DoctorID );
+
+---- Wards
+--CREATE TABLE Ward (
+--WardID INT IDENTITY (1 ,1) PRIMARY KEY ,
+--WardName NVARCHAR (50) NOT NULL ,
+--Capacity SMALLINT NOT NULL CHECK ( Capacity > 0) ,
+--DeptID INT NOT NULL REFERENCES Department ( DeptID )
+--);
+---- Patients
+--CREATE TABLE Patient (
+--PatientID INT IDENTITY (1 ,1) PRIMARY KEY ,
+--FirstName NVARCHAR (50) NOT NULL ,
+--LastName NVARCHAR (50) NOT NULL ,
+--DOB DATE NOT NULL ,
+--Gender CHAR (1) CHECK ( Gender IN ('M','F','O')),
+--Address NVARCHAR (200) ,
+--Phone NVARCHAR (20) ,
+--InsuranceNo NVARCHAR (50)
+--);
+---- Appointments
+--CREATE TABLE Appointment (
+--AppointmentID INT IDENTITY (1 ,1) PRIMARY KEY ,
+--PatientID INT NOT NULL REFERENCES
+--Patient ( PatientID ),
+--DoctorID INT NOT NULL REFERENCES
+--Doctor ( DoctorID ),
+--ApptDate DATE NOT NULL ,
+--ApptTime TIME NOT NULL ,
+--Status NVARCHAR (20) DEFAULT 'Scheduled'
+--CHECK ( Status IN
+--('Scheduled','Completed','Cancelled','No-Show')),Notes NVARCHAR (MAX ));
+
+-- Admissions
+--CREATE TABLE Admission (
+--AdmissionID INT IDENTITY (1 ,1) PRIMARY KEY ,
+--PatientID INT NOT NULL REFERENCES Patient(PatientID),
+--WardID INT NOT NULL REFERENCES Ward(WardID ),
+--AdmitDate DATE NOT NULL DEFAULT GETDATE () ,
+--DischargeDate DATE NULL ,
+--DiagnosisCode NVARCHAR (20),
+--CONSTRAINT CHK_Dates CHECK (DischargeDate IS NULL OR
+--DischargeDate >= AdmitDate )
+--);
+
+---- Medications
+--CREATE TABLE Medication (
+--MedID INT IDENTITY (1 ,1) PRIMARY KEY ,
+--MedName NVARCHAR (100) NOT NULL UNIQUE ,
+--DosageForm NVARCHAR (50) ,
+--UnitCost DECIMAL (10 ,2) NOT NULL CHECK ( UnitCost >= 0) ,
+--StockQty INT NOT NULL DEFAULT 0 CHECK ( StockQty
+-->= 0)
+--);
+
+---- Prescriptions
+--CREATE TABLE Prescription (
+--PrescID INT IDENTITY (1 ,1) PRIMARY KEY ,
+--AdmissionID INT NOT NULL REFERENCES Admission (AdmissionID ),
+--MedID INT NOT NULL REFERENCES Medication (MedID ),
+--DoctorID INT NOT NULL REFERENCES Doctor (DoctorID ),
+--Quantity INT NOT NULL CHECK ( Quantity > 0) ,
+--PrescDate DATE NOT NULL DEFAULT GETDATE ()
+--);
+---- Bills
+--CREATE TABLE Bill (
+--BillID INT IDENTITY (1 ,1) PRIMARY KEY ,
+--PatientID INT NOT NULL REFERENCES
+--Patient (PatientID),
+--AdmissionID INT NULL REFERENCES
+--Admission (AdmissionID ),
+--TotalAmount DECIMAL (12 ,2) NOT NULL CHECK ( TotalAmount >= 0) ,
+--PaidAmount DECIMAL (12 ,2) NOT NULL DEFAULT 0 CHECK
+--(PaidAmount >= 0) ,
+--BillDate DATE NOT NULL DEFAULT GETDATE () ,
+--Status NVARCHAR (20) DEFAULT 'Unpaid'
+--CHECK ( Status IN ('Unpaid','Partial','Paid','Waived'))
+--);
+
+---- Staff
+--CREATE TABLE Staff (
+--StaffID INT IDENTITY (1 ,1) PRIMARY KEY ,
+--FirstName NVARCHAR (50) NOT NULL ,
+--LastName NVARCHAR (50) NOT NULL ,
+--Role NVARCHAR (50) NOT NULL ,
+--DeptID INT NOT NULL REFERENCES Department ( DeptID ),
+--Salary DECIMAL (10 ,2) NOT NULL CHECK ( Salary > 0) ,
+--StartDate DATE NOT NULL DEFAULT GETDATE ()
+--);
+--PRINT 'UniHospital schema created successfully.';
+--GO
